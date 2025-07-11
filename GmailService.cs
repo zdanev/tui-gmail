@@ -20,7 +20,7 @@ namespace tui_gmail
         static string[] Scopes = { Google.Apis.Gmail.v1.GmailService.Scope.GmailReadonly };
         static string ApplicationName = "TUI-Gmail";
 
-        public async Task<IList<Mailbox>> GetMailboxesAsync()
+        public async Task<IList<Mailbox>?> GetMailboxesAsync()
         {
             UserCredential credential;
 
@@ -63,8 +63,63 @@ namespace tui_gmail
             UsersResource.LabelsResource.ListRequest request = service.Users.Labels.List("me");
 
             // List labels.
-            var labels = (await request.ExecuteAsync()).Labels;
+            var labelsResponse = await request.ExecuteAsync();
+            var labels = labelsResponse.Labels;
+            if (labels == null)
+            {
+                return new List<Mailbox>();
+            }
             return labels.Select(l => new Mailbox { Id = l.Id, Name = l.Name }).ToList();
+        }
+
+        public async Task<IList<Email>> GetEmailsAsync(string mailboxId)
+        {
+            UserCredential credential;
+
+            using (var stream =
+                new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+            {
+                string credPath = "token.json";
+                credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.FromStream(stream).Secrets,
+                    Scopes,
+                    "user",
+                    CancellationToken.None,
+                    new FileDataStore(credPath, true));
+            }
+
+            var service = new Google.Apis.Gmail.v1.GmailService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = ApplicationName,
+            });
+
+            var request = service.Users.Messages.List("me");
+            request.LabelIds = mailboxId;
+            request.MaxResults = 10;
+
+            var response = await request.ExecuteAsync();
+            var emails = new List<Email>();
+
+            if (response.Messages != null)
+            {
+                foreach (var message in response.Messages)
+                {
+                    var msgRequest = service.Users.Messages.Get("me", message.Id);
+                    var messageDetails = await msgRequest.ExecuteAsync();
+                    var fromHeader = messageDetails.Payload.Headers.FirstOrDefault(h => h.Name == "From");
+                    var subjectHeader = messageDetails.Payload.Headers.FirstOrDefault(h => h.Name == "Subject");
+
+                    emails.Add(new Email
+                    {
+                        From = fromHeader?.Value,
+                        Subject = subjectHeader?.Value,
+                        Snippet = messageDetails.Snippet
+                    });
+                }
+            }
+
+            return emails;
         }
     }
 }
