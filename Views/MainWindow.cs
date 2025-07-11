@@ -3,24 +3,34 @@ namespace TuiGmail.Views;
 using System.Data;
 using Terminal.Gui;
 using Terminal.Gui.Graphs;
-using static ThemeManager;
 
 using TuiGmail.EmailService;
 
 public class MainWindow : Window
 {
-    private DataTable emailDataTable;
+    private readonly IEmailService emailService;
+    private readonly UserProfile userProfile;
+
+    private DataTable? emailDataTable;
     private MenuItem defaultTheme = new MenuItem("Default", "", null) { Checked = true };
     private MenuItem darkTheme = new MenuItem("Dark", "", null);
     private MenuItem lightTheme = new MenuItem("Light", "", null);
     private MenuItem darkOrangeTheme = new MenuItem("Dark Orange", "", null);
-    private readonly IEmailService _emailService;
-    private Label userEmailLabel;
+    private Label? userEmailLabel;
+    private ListView? mailboxesListView;
+    private TableView? messagesView;
 
     public MainWindow(IEmailService emailService) : base("TUI Gmail")
     {
-        _emailService = emailService;
+        this.emailService = emailService;
+        this.userProfile = emailService.GetUserProfile();
+        this.Title = userProfile.EmailAddress;
 
+        InitializeComponent();
+    }
+
+    private void InitializeComponent()
+    {
         X = 0;
         Y = 1; // Leave one row for the top-level menu
 
@@ -89,7 +99,7 @@ public class MainWindow : Window
         };
         Add(userEmailLabel);
 
-        var mailboxesListView = new ListView()
+        mailboxesListView = new ListView()
         {
             X = 0,
             Y = Pos.Bottom(userEmailLabel),
@@ -98,20 +108,8 @@ public class MainWindow : Window
         };
         Add(mailboxesListView);
 
-        _ = Task.Run(async () =>
-        {
-            var userProfile = await _emailService.GetUserProfileAsync();
-            Application.MainLoop.Invoke(() =>
-            {
-                userEmailLabel.Text = userProfile.EmailAddress;
-            });
-
-            var mailboxes = await _emailService.GetMailboxesAsync();
-            Application.MainLoop.Invoke(() =>
-            {
-                mailboxesListView.SetSource(mailboxes.Select(m => m.Name).ToList());
-            });
-        });
+        var mailboxes = this.emailService.GetMailboxes();
+        mailboxesListView.SetSource(mailboxes.Select(m => m.Name).ToList());
 
         var verticalLine = new LineView(Orientation.Vertical)
         {
@@ -121,7 +119,7 @@ public class MainWindow : Window
         };
         // Add(verticalLine);
 
-        var messagesView = new TableView()
+        messagesView = new TableView()
         {
             X = Pos.Right(verticalLine) - 1, // !!!
             Y = 0 - 1, // !!!

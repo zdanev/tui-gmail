@@ -13,8 +13,8 @@ public class GmailService : IEmailService
     static string[] Scopes = { Google.Apis.Gmail.v1.GmailService.Scope.GmailReadonly, Google.Apis.PeopleService.v1.PeopleServiceService.Scope.UserinfoProfile, Google.Apis.PeopleService.v1.PeopleServiceService.Scope.UserinfoEmail };
     static string ApplicationName = "TUI-Gmail";
     private UserCredential? credentials;
-    private UserProfile? _cachedUserProfile;
-    private IList<Mailbox>? _cachedMailboxes;
+    private UserProfile? cachedUserProfile;
+    private IList<Mailbox>? cachedMailboxes;
 
     public async Task<bool> AuthenticateAsync()
     {
@@ -61,9 +61,9 @@ public class GmailService : IEmailService
             throw new InvalidOperationException("Authentication required. Call AuthenticateAsync first.");
         }
 
-        if (_cachedUserProfile != null)
+        if (cachedUserProfile != null)
         {
-            return _cachedUserProfile;
+            return cachedUserProfile;
         }
 
         var peopleService = new Google.Apis.PeopleService.v1.PeopleServiceService(new BaseClientService.Initializer()
@@ -101,8 +101,13 @@ public class GmailService : IEmailService
                 }
             }
         }
-        _cachedUserProfile = userProfile;
+        cachedUserProfile = userProfile;
         return userProfile;
+    }
+
+    public UserProfile GetUserProfile()
+    {
+        return cachedUserProfile!;
     }
 
     public async Task<IList<Mailbox>> GetMailboxesAsync()
@@ -112,9 +117,9 @@ public class GmailService : IEmailService
             throw new InvalidOperationException("Authentication required. Call AuthenticateAsync first.");
         }
 
-        if (_cachedMailboxes != null)
+        if (cachedMailboxes != null)
         {
-            return _cachedMailboxes;
+            return cachedMailboxes;
         }
 
         // Create Gmail API service.
@@ -148,8 +153,13 @@ public class GmailService : IEmailService
                 TotalMessages = labelDetails.MessagesTotal ?? 0
             });
         }
-        _cachedMailboxes = mailboxes;
+        cachedMailboxes = mailboxes;
         return mailboxes;
+    }
+
+    public IList<Mailbox> GetMailboxes()
+    {
+        return cachedMailboxes!;
     }
 
     public async Task<IList<Email>> GetEmailsAsync(string mailboxId)
