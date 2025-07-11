@@ -5,6 +5,8 @@ using Terminal.Gui;
 using Terminal.Gui.Graphs;
 using static ThemeManager;
 
+using TuiGmail.EmailService;
+
 public class MainWindow : Window
 {
     private DataTable emailDataTable;
@@ -12,9 +14,12 @@ public class MainWindow : Window
     private MenuItem darkTheme = new MenuItem("Dark", "", null);
     private MenuItem lightTheme = new MenuItem("Light", "", null);
     private MenuItem darkOrangeTheme = new MenuItem("Dark Orange", "", null);
+    private readonly IEmailService _emailService;
+    private Label userEmailLabel;
 
-    public MainWindow() : base("TUI Gmail")
+    public MainWindow(IEmailService emailService) : base("TUI Gmail")
     {
+        _emailService = emailService;
 
         X = 0;
         Y = 1; // Leave one row for the top-level menu
@@ -74,15 +79,39 @@ public class MainWindow : Window
         });
         Application.Top.Add(statusBar);
 
-        var mailboxesListView = new ListView()
+        userEmailLabel = new Label("Loading user...")
         {
             X = 0,
             Y = 0,
+            Width = Dim.Fill(),
+            Height = 1,
+            TextAlignment = TextAlignment.Centered,
+        };
+        Add(userEmailLabel);
+
+        var mailboxesListView = new ListView()
+        {
+            X = 0,
+            Y = Pos.Bottom(userEmailLabel),
             Width = 25,
             Height = Dim.Fill(),
         };
-        mailboxesListView.SetSource(new List<string>() { "Inbox", "Sent", "Drafts", "Trash" });
         Add(mailboxesListView);
+
+        _ = Task.Run(async () =>
+        {
+            var userProfile = await _emailService.GetUserProfileAsync();
+            Application.MainLoop.Invoke(() =>
+            {
+                userEmailLabel.Text = userProfile.EmailAddress;
+            });
+
+            var mailboxes = await _emailService.GetMailboxesAsync();
+            Application.MainLoop.Invoke(() =>
+            {
+                mailboxesListView.SetSource(mailboxes.Select(m => m.Name).ToList());
+            });
+        });
 
         var verticalLine = new LineView(Orientation.Vertical)
         {

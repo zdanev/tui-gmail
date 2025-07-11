@@ -13,6 +13,8 @@ public class GmailService : IEmailService
     static string[] Scopes = { Google.Apis.Gmail.v1.GmailService.Scope.GmailReadonly, Google.Apis.PeopleService.v1.PeopleServiceService.Scope.UserinfoProfile, Google.Apis.PeopleService.v1.PeopleServiceService.Scope.UserinfoEmail };
     static string ApplicationName = "TUI-Gmail";
     private UserCredential? credentials;
+    private UserProfile? _cachedUserProfile;
+    private IList<Mailbox>? _cachedMailboxes;
 
     public async Task<bool> AuthenticateAsync()
     {
@@ -59,6 +61,11 @@ public class GmailService : IEmailService
             throw new InvalidOperationException("Authentication required. Call AuthenticateAsync first.");
         }
 
+        if (_cachedUserProfile != null)
+        {
+            return _cachedUserProfile;
+        }
+
         var peopleService = new Google.Apis.PeopleService.v1.PeopleServiceService(new BaseClientService.Initializer()
         {
             HttpClientInitializer = credentials,
@@ -94,7 +101,7 @@ public class GmailService : IEmailService
                 }
             }
         }
-
+        _cachedUserProfile = userProfile;
         return userProfile;
     }
 
@@ -103,6 +110,11 @@ public class GmailService : IEmailService
         if (credentials == null)
         {
             throw new InvalidOperationException("Authentication required. Call AuthenticateAsync first.");
+        }
+
+        if (_cachedMailboxes != null)
+        {
+            return _cachedMailboxes;
         }
 
         // Create Gmail API service.
@@ -136,6 +148,7 @@ public class GmailService : IEmailService
                 TotalMessages = labelDetails.MessagesTotal ?? 0
             });
         }
+        _cachedMailboxes = mailboxes;
         return mailboxes;
     }
 

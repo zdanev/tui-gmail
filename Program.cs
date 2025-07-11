@@ -30,7 +30,7 @@ class Program
         ThemeManager.DefaultScheme = Colors.Base;
         var top = Application.Top;
 
-        var mainWindow = new MainWindow();
+        var mainWindow = new MainWindow(emailService);
         top.Add(mainWindow);
 
         Application.Run();
