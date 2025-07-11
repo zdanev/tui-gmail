@@ -1,4 +1,5 @@
 using Terminal.Gui;
+using Terminal.Gui.Graphs;
 
 public class MainWindow : Window
 {
@@ -42,22 +43,16 @@ public class MainWindow : Window
             Y = 0,
             Width = 25,
             Height = Dim.Fill(),
-            // Border = new Border()
-            // {
-            //     Title = "Mailboxes",
-            //     BorderStyle = Terminal.Gui.BorderStyle.Single
-            // },
         };
         MailboxesListView.SetSource(new List<string> () { "Inbox", "Sent", "Drafts", "Trash" });
         Add(MailboxesListView);
 
-        // var verticalLine = new LineView(Orientation.Vertical)
-        // {
-        //     X = Pos.Right(MailboxesListView),
-        //     Y = 0,
-        //     Height = Dim.Fill(),
-        //     // Width = 1
-        // };
-        // Add(verticalLine);
+        var verticalLine = new LineView(Orientation.Vertical)
+        {
+            X = Pos.Right(MailboxesListView),
+            Y = 0,
+            Height = Dim.Fill(),
+        };
+        Add(verticalLine);
     }
 }
