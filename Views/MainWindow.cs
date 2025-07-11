@@ -101,7 +101,6 @@ public class MainWindow : Window
         };
         messagesView.Style.ExpandLastColumn = true;
         Add(messagesView);
-        Add(verticalLine); // render vertical separator after the view
 
         var horizontalLine = new LineView(Orientation.Horizontal)
         {
@@ -110,20 +109,45 @@ public class MainWindow : Window
             Width = Dim.Fill(),
         };
         Add(horizontalLine);
+        Add(verticalLine); // render vertical separator after the view
+
+        var emailView = new EmailView()
+        {
+            X = Pos.Right(verticalLine),
+            Y = Pos.Bottom(horizontalLine),
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+        };
+        Add(emailView);
 
         // Create a DataTable for the email list
         emailDataTable = new DataTable();
         emailDataTable.Columns.Add("Time");
         emailDataTable.Columns.Add("From");
         emailDataTable.Columns.Add("Subject");
+        emailDataTable.Columns.Add("Body");
 
         // Add some dummy data
-        emailDataTable.Rows.Add("10:00 AM", "sender1@example.com", "Hello World");
-        emailDataTable.Rows.Add("10:00 AM", "sender2@example.com", "Re: Your order");
-        emailDataTable.Rows.Add("Yesterday", "sender3@example.com", "Important update");
+        emailDataTable.Rows.Add("10:00 AM", "sender1@example.com", "Hello World", "This is the body of the first email.");
+        emailDataTable.Rows.Add("10:00 AM", "sender2@example.com", "Re: Your order", "This is the body of the second email.");
+        emailDataTable.Rows.Add("Yesterday", "sender3@example.com", "Important update", "This is the body of the third email.");
 
         messagesView.Table = emailDataTable;
-    }
 
-    
+        messagesView.SelectedCellChanged += (args) =>
+        {
+            var row = args.NewRow;
+            if (row >= 0 && row < emailDataTable.Rows.Count)
+            {
+                var from = emailDataTable.Rows[row]["From"].ToString()!;
+                var subject = emailDataTable.Rows[row]["Subject"].ToString()!;
+                var body = emailDataTable.Rows[row]["Body"].ToString()!;
+                emailView.SetEmail(from, subject, body);
+            }
+        };
+
+        // Select the first row by default to display an email
+        messagesView.SelectedRow = 0;
+        messagesView.SetNeedsDisplay();
+    }
 }
