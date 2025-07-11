@@ -9,6 +9,16 @@ namespace tui_gmail
         static async Task Main(string[] args)
         {
             IEmailService emailService = new GmailService();
+
+            var userProfile = await emailService.GetUserProfileAsync();
+            Console.WriteLine("\n--- User Profile ---");
+            Console.WriteLine($"Full Name: {userProfile.FullName}");
+            Console.WriteLine($"Email: {userProfile.EmailAddress}");
+            Console.WriteLine($"Country: {userProfile.Country}");
+            Console.WriteLine($"Language: {userProfile.Language}");
+            Console.WriteLine($"Profile Picture URL: {userProfile.ProfilePictureUrl}");
+            Console.WriteLine("--------------------\n");
+
             var mailboxes = await emailService.GetMailboxesAsync();
 
             if (mailboxes != null && mailboxes.Count > 0)
@@ -16,7 +26,7 @@ namespace tui_gmail
                 Console.WriteLine("Mailboxes:");
                 for (int i = 0; i < mailboxes.Count; i++)
                 {
-                    Console.WriteLine($"[{i + 1}] {mailboxes[i].Name} ({mailboxes[i].UnreadMessages})");
+                    Console.WriteLine($"[{i + 1}] {mailboxes[i].Name} ({mailboxes[i].UnreadMessages}/{mailboxes[i].TotalMessages})");
                 }
 
                 Console.Write("\nEnter the number of the mailbox to view emails: ");

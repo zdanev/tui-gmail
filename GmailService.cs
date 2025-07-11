@@ -4,6 +4,8 @@ using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
+using Google.Apis.PeopleService.v1;
+using Google.Apis.PeopleService.v1.Data;
 using System; 
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +19,7 @@ namespace tui_gmail
     {
         // If modifying these scopes, delete your previously saved credentials
         // at ~/.credentials/gmail-dotnet-quickstart.json
-        static string[] Scopes = { Google.Apis.Gmail.v1.GmailService.Scope.GmailReadonly };
+        static string[] Scopes = { Google.Apis.Gmail.v1.GmailService.Scope.GmailReadonly, Google.Apis.PeopleService.v1.PeopleServiceService.Scope.UserinfoProfile, Google.Apis.PeopleService.v1.PeopleServiceService.Scope.UserinfoEmail };
         static string ApplicationName = "TUI-Gmail";
 
         public async Task<IList<Mailbox>> GetMailboxesAsync()
@@ -79,7 +81,8 @@ namespace tui_gmail
                 {
                     Id = label.Id ?? string.Empty,
                     Name = label.Name ?? string.Empty,
-                    UnreadMessages = labelDetails.MessagesUnread ?? 0
+                    UnreadMessages = labelDetails.MessagesUnread ?? 0,
+                    TotalMessages = labelDetails.MessagesTotal ?? 0
                 });
             }
             return mailboxes;
@@ -133,6 +136,61 @@ namespace tui_gmail
             }
 
             return emails;
+        }
+
+        public async Task<UserProfile> GetUserProfileAsync()
+        {
+            UserCredential credential;
+
+            using (var stream =
+                new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+            {
+                string credPath = "token.json";
+                credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.FromStream(stream).Secrets,
+                    Scopes,
+                    "user",
+                    CancellationToken.None,
+                    new FileDataStore(credPath, true));
+            }
+
+            var peopleService = new Google.Apis.PeopleService.v1.PeopleServiceService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = ApplicationName,
+            });
+
+            var profileRequest = peopleService.People.Get("people/me");
+            profileRequest.PersonFields = "names,emailAddresses,locales,photos";
+
+            var person = await profileRequest.ExecuteAsync();
+
+            var userProfile = new UserProfile();
+
+            if (person != null)
+            {
+                userProfile.FullName = person.Names?.FirstOrDefault()?.DisplayName ?? string.Empty;
+                userProfile.EmailAddress = person.EmailAddresses?.FirstOrDefault()?.Value ?? string.Empty;
+                userProfile.ProfilePictureUrl = person.Photos?.FirstOrDefault()?.Url ?? string.Empty;
+
+                // Locales can contain language and country information
+                var locale = person.Locales?.FirstOrDefault()?.Value;
+                if (!string.IsNullOrEmpty(locale))
+                {
+                    string[] parts = locale.Split('-');
+                    if (parts.Length == 2)
+                    {
+                        userProfile.Language = parts[0];
+                        userProfile.Country = parts[1];
+                    }
+                    else
+                    {
+                        userProfile.Language = locale;
+                    }
+                }
+            }
+
+            return userProfile;
         }
     }
 }

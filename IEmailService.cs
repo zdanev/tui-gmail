@@ -8,5 +8,6 @@ namespace tui_gmail
     {
         Task<IList<Mailbox>> GetMailboxesAsync();
         Task<IList<Email>> GetEmailsAsync(string mailboxId);
+        Task<UserProfile> GetUserProfileAsync();
     }
 }

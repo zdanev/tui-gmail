@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Apis.Gmail.v1" Version="1.70.0.3833" />
+    <PackageReference Include="Google.Apis.PeopleService.v1" Version="1.69.0.3785" />
   </ItemGroup>
 
 </Project>
