@@ -63,7 +63,7 @@ public class MainWindow : Window
         };
         // Add(verticalLine);
 
-        var emailView = new TableView()
+        var messagesView = new TableView()
         {
             X = Pos.Right(verticalLine) - 1, // !!!
             Y = 0 - 1, // !!!
@@ -71,28 +71,29 @@ public class MainWindow : Window
             Height = Dim.Percent(50),
             FullRowSelect = true,
         };
-        Add(emailView);
-        Add(verticalLine); // !!!
+        messagesView.Style.ExpandLastColumn = true;
+        Add(messagesView);
+        Add(verticalLine); // render vertical separator after the view
 
         var horizontalLine = new LineView(Orientation.Horizontal)
         {
             X = Pos.Right(mailboxesListView),
-            Y = Pos.Bottom(emailView),
+            Y = Pos.Bottom(messagesView),
             Width = Dim.Fill(),
         };
         Add(horizontalLine);
 
         // Create a DataTable for the email list
         emailDataTable = new DataTable();
+        emailDataTable.Columns.Add("Time");
         emailDataTable.Columns.Add("From");
         emailDataTable.Columns.Add("Subject");
-        emailDataTable.Columns.Add("Time");
 
         // Add some dummy data
-        emailDataTable.Rows.Add("sender1@example.com", "Hello World", "10:00 AM");
-        emailDataTable.Rows.Add("sender2@example.com", "Re: Your order", "10:05 AM");
-        emailDataTable.Rows.Add("sender3@example.com", "Important update", "10:10 AM");
+        emailDataTable.Rows.Add("10:00 AM", "sender1@example.com", "Hello World");
+        emailDataTable.Rows.Add("10:00 AM", "sender2@example.com", "Re: Your order");
+        emailDataTable.Rows.Add("Yesterday", "sender3@example.com", "Important update");
 
-        emailView.Table = emailDataTable;
+        messagesView.Table = emailDataTable;
     }
 }
