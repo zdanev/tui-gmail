@@ -1,3 +1,5 @@
+namespace TuiGmail.Views;
+
 using Terminal.Gui;
 
 public class EmailView : View

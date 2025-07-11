@@ -1,3 +1,5 @@
+namespace TuiGmail.Views;
+
 using System.Data;
 using Terminal.Gui;
 using Terminal.Gui.Graphs;
@@ -10,11 +12,10 @@ public class MainWindow : Window
     private MenuItem darkTheme = new MenuItem("Dark", "", null);
     private MenuItem lightTheme = new MenuItem("Light", "", null);
     private MenuItem darkOrangeTheme = new MenuItem("Dark Orange", "", null);
-    
 
     public MainWindow() : base("TUI Gmail")
     {
-        
+
         X = 0;
         Y = 1; // Leave one row for the top-level menu
 

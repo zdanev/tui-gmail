@@ -1,3 +1,5 @@
+namespace TuiGmail.Views;
+
 using Terminal.Gui;
 
 public static class ThemeManager
