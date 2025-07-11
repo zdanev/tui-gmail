@@ -1,58 +1,98 @@
+using System.Data;
 using Terminal.Gui;
 using Terminal.Gui.Graphs;
 
 public class MainWindow : Window
 {
+    private DataTable emailDataTable;
+
     public MainWindow() : base("TUI Gmail")
     {
         X = 0;
         Y = 1; // Leave one row for the top-level menu
 
-        var menu = new MenuBar (new MenuBarItem [] {
-            new MenuBarItem ("_File", new MenuItem [] {
-                new MenuItem ("_New", "", null),
-                new MenuItem ("_Open", "", null),
-                new MenuItem ("_Close", "", null),
-                new MenuItem ("_Save", "", null),
-                new MenuItem ("_Quit", "", () => { Application.RequestStop (); })
+        var menu = new MenuBar(new MenuBarItem[]
+        {
+            new MenuBarItem("_File", new MenuItem[]
+            {
+                new MenuItem("_New", "", null),
+                new MenuItem("_Open", "", null),
+                new MenuItem("_Close", "", null),
+                new MenuItem("_Save", "", null),
+                new MenuItem("_Quit", "", () => { Application.RequestStop(); })
             }),
-            new MenuBarItem ("_Edit", new MenuItem [] {
-                new MenuItem ("_Copy", "", null),
-                new MenuItem ("C_ut", "", null),
-                new MenuItem ("_Paste", "", null)
+            new MenuBarItem("_Edit", new MenuItem[]
+            {
+                new MenuItem("_Copy", "", null),
+                new MenuItem("C_ut", "", null),
+                new MenuItem("_Paste", "", null)
             }),
-            new MenuBarItem ("_View", new MenuItem [] {
-                new MenuItem ("_Zoom In", "", null),
-                new MenuItem ("Zoom _Out", "", null)
+            new MenuBarItem("_View", new MenuItem[]
+            {
+                new MenuItem("_Zoom In", "", null),
+                new MenuItem("Zoom _Out", "", null)
             })
         });
-        Application.Top.Add (menu);
+        Application.Top.Add(menu);
         Width = Dim.Fill();
         Height = Dim.Fill() - 1; // Leave one row for the status bar
 
-        var statusBar = new StatusBar (new StatusItem [] {
+        var statusBar = new StatusBar(new StatusItem[]
+        {
             new StatusItem(Key.F1, "~F1~ Help", null),
             new StatusItem(Key.F2, "~F2~ Save", null),
             new StatusItem(Key.F3, "~F3~ Load", null)
         });
-        Application.Top.Add (statusBar);
+        Application.Top.Add(statusBar);
 
-        var MailboxesListView = new ListView()
+        var mailboxesListView = new ListView()
         {
             X = 0,
             Y = 0,
             Width = 25,
             Height = Dim.Fill(),
         };
-        MailboxesListView.SetSource(new List<string> () { "Inbox", "Sent", "Drafts", "Trash" });
-        Add(MailboxesListView);
+        mailboxesListView.SetSource(new List<string>() { "Inbox", "Sent", "Drafts", "Trash" });
+        Add(mailboxesListView);
 
         var verticalLine = new LineView(Orientation.Vertical)
         {
-            X = Pos.Right(MailboxesListView),
+            X = Pos.Right(mailboxesListView),
             Y = 0,
             Height = Dim.Fill(),
         };
-        Add(verticalLine);
+        // Add(verticalLine);
+
+        var emailView = new TableView()
+        {
+            X = Pos.Right(verticalLine) - 1, // !!!
+            Y = 0 - 1, // !!!
+            Width = Dim.Fill() + 1, // !!!
+            Height = Dim.Percent(50),
+            FullRowSelect = true,
+        };
+        Add(emailView);
+        Add(verticalLine); // !!!
+
+        var horizontalLine = new LineView(Orientation.Horizontal)
+        {
+            X = Pos.Right(mailboxesListView),
+            Y = Pos.Bottom(emailView),
+            Width = Dim.Fill(),
+        };
+        Add(horizontalLine);
+
+        // Create a DataTable for the email list
+        emailDataTable = new DataTable();
+        emailDataTable.Columns.Add("From");
+        emailDataTable.Columns.Add("Subject");
+        emailDataTable.Columns.Add("Time");
+
+        // Add some dummy data
+        emailDataTable.Rows.Add("sender1@example.com", "Hello World", "10:00 AM");
+        emailDataTable.Rows.Add("sender2@example.com", "Re: Your order", "10:05 AM");
+        emailDataTable.Rows.Add("sender3@example.com", "Important update", "10:10 AM");
+
+        emailView.Table = emailDataTable;
     }
 }
