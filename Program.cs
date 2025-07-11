@@ -23,29 +23,22 @@ namespace tui_gmail
                 if (int.TryParse(Console.ReadLine(), out int choice) && choice > 0 && choice <= mailboxes.Count)
                 {
                     var selectedMailbox = mailboxes[choice - 1];
-                    if (selectedMailbox.Id != null)
-                    {
-                        var emails = await emailService.GetEmailsAsync(selectedMailbox.Id);
+                    var emails = await emailService.GetEmailsAsync(selectedMailbox.Id);
 
-                        if (emails != null && emails.Any())
+                    if (emails != null && emails.Any())
+                    {
+                        Console.WriteLine($"\nEmails in {selectedMailbox.Name}:");
+                        foreach (var email in emails)
                         {
-                            Console.WriteLine($"\nEmails in {selectedMailbox.Name}:");
-                            foreach (var email in emails)
-                            {
-                                Console.WriteLine($"From: {email.From}");
-                                Console.WriteLine($"Subject: {email.Subject}");
-                                Console.WriteLine($"Snippet: {email.Snippet}");
-                                Console.WriteLine("--------------------------------");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("No emails found in this mailbox.");
+                            Console.WriteLine($"From: {email.From}");
+                            Console.WriteLine($"Subject: {email.Subject}");
+                            Console.WriteLine($"Snippet: {email.Snippet}");
+                            Console.WriteLine("--------------------------------");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Selected mailbox has no ID.");
+                        Console.WriteLine("No emails found in this mailbox.");
                     }
                 }
                 else

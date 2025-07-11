@@ -20,7 +20,7 @@ namespace tui_gmail
         static string[] Scopes = { Google.Apis.Gmail.v1.GmailService.Scope.GmailReadonly };
         static string ApplicationName = "TUI-Gmail";
 
-        public async Task<IList<Mailbox>?> GetMailboxesAsync()
+        public async Task<IList<Mailbox>> GetMailboxesAsync()
         {
             UserCredential credential;
 
@@ -34,7 +34,7 @@ namespace tui_gmail
                 Console.WriteLine("5. Download the credentials file and rename it to 'credentials.json'.");
                 Console.WriteLine("6. Place 'credentials.json' in the same directory as the application executable.");
                 Console.WriteLine("You can use 'credentials.json.sample' as a template.");
-                return null;
+                return new List<Mailbox>();
             }
 
             using (var stream =
@@ -77,9 +77,9 @@ namespace tui_gmail
                 var labelDetails = await labelDetailsRequest.ExecuteAsync();
                 mailboxes.Add(new Mailbox
                 {
-                    Id = label.Id,
-                    Name = label.Name,
-                    UnreadMessages = labelDetails.MessagesUnread
+                    Id = label.Id ?? string.Empty,
+                    Name = label.Name ?? string.Empty,
+                    UnreadMessages = labelDetails.MessagesUnread ?? 0
                 });
             }
             return mailboxes;
@@ -125,9 +125,9 @@ namespace tui_gmail
 
                     emails.Add(new Email
                     {
-                        From = fromHeader?.Value,
-                        Subject = subjectHeader?.Value,
-                        Snippet = messageDetails.Snippet
+                        From = fromHeader?.Value ?? string.Empty,
+                        Subject = subjectHeader?.Value ?? string.Empty,
+                        Snippet = messageDetails.Snippet ?? string.Empty
                     });
                 }
             }
