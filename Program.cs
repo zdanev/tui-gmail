@@ -16,7 +16,7 @@ namespace tui_gmail
                 Console.WriteLine("Mailboxes:");
                 for (int i = 0; i < mailboxes.Count; i++)
                 {
-                    Console.WriteLine($"[{i + 1}] {mailboxes[i].Name}");
+                    Console.WriteLine($"[{i + 1}] {mailboxes[i].Name} ({mailboxes[i].UnreadMessages})");
                 }
 
                 Console.Write("\nEnter the number of the mailbox to view emails: ");

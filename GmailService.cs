@@ -69,7 +69,20 @@ namespace tui_gmail
             {
                 return new List<Mailbox>();
             }
-            return labels.Select(l => new Mailbox { Id = l.Id, Name = l.Name }).ToList();
+
+            var mailboxes = new List<Mailbox>();
+            foreach (var label in labels)
+            {
+                var labelDetailsRequest = service.Users.Labels.Get("me", label.Id);
+                var labelDetails = await labelDetailsRequest.ExecuteAsync();
+                mailboxes.Add(new Mailbox
+                {
+                    Id = label.Id,
+                    Name = label.Name,
+                    UnreadMessages = labelDetails.MessagesUnread
+                });
+            }
+            return mailboxes;
         }
 
         public async Task<IList<Email>> GetEmailsAsync(string mailboxId)

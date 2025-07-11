@@ -4,5 +4,6 @@ namespace tui_gmail
     {
         public string? Id { get; set; }
         public string? Name { get; set; }
+        public int? UnreadMessages { get; set; }
     }
 }
