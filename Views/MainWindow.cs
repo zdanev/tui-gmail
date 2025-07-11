@@ -1,85 +1,41 @@
 using System.Data;
 using Terminal.Gui;
 using Terminal.Gui.Graphs;
+using static ThemeManager;
 
 public class MainWindow : Window
 {
     private DataTable emailDataTable;
-    private MenuItem _selectedTheme;
+    private MenuItem defaultTheme = new MenuItem("Default", "", null) { Checked = true };
+    private MenuItem darkTheme = new MenuItem("Dark", "", null);
+    private MenuItem lightTheme = new MenuItem("Light", "", null);
+    private MenuItem darkOrangeTheme = new MenuItem("Dark Orange", "", null);
+    
 
     public MainWindow() : base("TUI Gmail")
     {
+        
         X = 0;
         Y = 1; // Leave one row for the top-level menu
 
-        var originalColorScheme = Colors.Base;
-
-        var defaultTheme = new MenuItem("Default", "", null) { Checked = true };
-        var darkTheme = new MenuItem("Dark", "", null);
-        var lightTheme = new MenuItem("Light", "", null);
-        var darkOrangeTheme = new MenuItem("Dark Orange", "", null);
-        _selectedTheme = defaultTheme;
-
-        void UpdateCheck(MenuItem newSelected)
-        {
-            if (_selectedTheme != null)
-            {
-                _selectedTheme.Checked = false;
-            }
-            _selectedTheme = newSelected;
-            _selectedTheme.Checked = true;
-        }
-
         defaultTheme.Action = () =>
         {
-            Colors.Base = originalColorScheme;
-            UpdateViewScheme(Application.Top, originalColorScheme);
-            UpdateCheck(defaultTheme);
+            ThemeManager.ApplyTheme(ThemeManager.DefaultScheme, defaultTheme);
         };
 
         darkTheme.Action = () =>
         {
-            var darkScheme = new ColorScheme
-            {
-                Normal = new Terminal.Gui.Attribute(Color.White, Color.Black),
-                Focus = new Terminal.Gui.Attribute(Color.Black, Color.Gray),
-                HotNormal = new Terminal.Gui.Attribute(Color.Cyan, Color.Black),
-                HotFocus = new Terminal.Gui.Attribute(Color.Cyan, Color.Gray),
-                Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-            };
-            Colors.Base = darkScheme;
-            UpdateViewScheme(Application.Top, darkScheme);
-            UpdateCheck(darkTheme);
+            ThemeManager.ApplyTheme(ThemeManager.DarkScheme, darkTheme);
         };
 
         lightTheme.Action = () =>
         {
-            var lightScheme = new ColorScheme
-            {
-                Normal = new Terminal.Gui.Attribute(Color.Black, Color.White),
-                Focus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
-                HotNormal = new Terminal.Gui.Attribute(Color.Blue, Color.White),
-                HotFocus = new Terminal.Gui.Attribute(Color.Blue, Color.DarkGray),
-                Disabled = new Terminal.Gui.Attribute(Color.Gray, Color.White)
-            };
-            Colors.Base = lightScheme;
-            UpdateViewScheme(Application.Top, lightScheme);
-            UpdateCheck(lightTheme);
+            ThemeManager.ApplyTheme(ThemeManager.LightScheme, lightTheme);
         };
 
         darkOrangeTheme.Action = () =>
         {
-            var darkOrangeScheme = new ColorScheme
-            {
-                Normal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-                Focus = new Terminal.Gui.Attribute(Color.DarkGray, Color.Gray),
-                HotNormal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-                HotFocus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Gray),
-                Disabled = new Terminal.Gui.Attribute(Color.Gray, Color.Black)
-            };
-            Colors.Base = darkOrangeScheme;
-            UpdateViewScheme(Application.Top, darkOrangeScheme);
-            UpdateCheck(darkOrangeTheme);
+            ThemeManager.ApplyTheme(ThemeManager.DarkOrangeScheme, darkOrangeTheme);
         };
 
         var menu = new MenuBar(new MenuBarItem[]
@@ -169,16 +125,5 @@ public class MainWindow : Window
         messagesView.Table = emailDataTable;
     }
 
-    private void UpdateViewScheme(View view, ColorScheme scheme)
-    {
-        if (view != null)
-        {
-            view.ColorScheme = scheme;
-            view.SetNeedsDisplay();
-            foreach (var subView in view.Subviews)
-            {
-                UpdateViewScheme(subView, scheme);
-            }
-        }
-    }
+    
 }
