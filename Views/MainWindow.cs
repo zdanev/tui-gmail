@@ -11,11 +11,6 @@ public class MainWindow : Window
     private readonly IEmailService emailService;
     private readonly UserProfile userProfile;
 
-    private MenuItem defaultTheme = new MenuItem("Default", "", null) { Checked = true };
-    private MenuItem darkTheme = new MenuItem("Dark", "", null);
-    private MenuItem lightTheme = new MenuItem("Light", "", null);
-    private MenuItem darkOrangeTheme = new MenuItem("Dark Orange", "", null);
-
     private IList<Mailbox>? mailboxes;
     private ListView? mailboxesListView;
     private DataTable? emailDataTable;
@@ -25,7 +20,6 @@ public class MainWindow : Window
     {
         this.emailService = emailService;
         this.userProfile = emailService.GetUserProfile();
-        this.Title = userProfile.EmailAddress;
 
         InitializeComponent();
 
@@ -37,75 +31,62 @@ public class MainWindow : Window
         }
     }
 
-    private async void LoadEmailsForSelectedMailbox()
-    {
-        if (mailboxesListView!.SelectedItem < 0 || mailboxesListView.SelectedItem >= mailboxes!.Count)
-            return;
-
-        var selectedMailbox = mailboxes[mailboxesListView.SelectedItem];
-        var emails = await emailService.GetEmailsAsync(selectedMailbox.Id);
-
-        Application.MainLoop.Invoke(() =>
-        {
-            emailDataTable!.Rows.Clear();
-            foreach (var email in emails)
-            {
-                emailDataTable.Rows.Add("<date>", email.From, email.Subject, email.Snippet);
-            }
-            if (emailDataTable.Rows.Count > 0)
-            {
-                messagesView!.SelectedRow = 0;
-            }
-            messagesView!.SetNeedsDisplay();
-        });
-    }
-
     private void InitializeComponent()
     {
+        Title = userProfile.EmailAddress;
         X = 0;
         Y = 1; // Leave one row for the top-level menu
 
+        var defaultTheme = new MenuItem("Default", "", null) { Checked = true };
         defaultTheme.Action = () =>
         {
             ThemeManager.ApplyTheme(ThemeManager.DefaultScheme, defaultTheme);
         };
 
+        var darkTheme = new MenuItem("Dark", "", null);
         darkTheme.Action = () =>
         {
             ThemeManager.ApplyTheme(ThemeManager.DarkScheme, darkTheme);
         };
 
+        var lightTheme = new MenuItem("Light", "", null);
         lightTheme.Action = () =>
         {
             ThemeManager.ApplyTheme(ThemeManager.LightScheme, lightTheme);
         };
 
+        var darkOrangeTheme = new MenuItem("Dark Orange", "", null);
         darkOrangeTheme.Action = () =>
         {
             ThemeManager.ApplyTheme(ThemeManager.DarkOrangeScheme, darkOrangeTheme);
         };
 
-        var menu = new MenuBar(new MenuBarItem[]
-        {
-            new MenuBarItem("_Mail", new MenuItem[]
-            {
+        var menu = new MenuBar(
+        [
+            new MenuBarItem("_Mail",
+            [
                 new MenuItem("_New", "", null),
                 new MenuItem("_Refresh", "", null),
                 new MenuItem("_Quit", "", () => { Application.RequestStop(); })
-            }),
-            new MenuBarItem("_Edit", new MenuItem[]
-            {
+            ]),
+            new MenuBarItem("_Edit",
+            [
                 new MenuItem("_Copy", "", null),
                 new MenuItem("C_ut", "", null),
                 new MenuItem("_Paste", "", null)
-            }),
-            new MenuBarItem("_View", new MenuItem[]
-            {
-                new MenuBarItem("_Theme", new MenuItem[] { defaultTheme, darkTheme, lightTheme, darkOrangeTheme }),
+            ]),
+            new MenuBarItem("_View",
+            [
+                new MenuBarItem("_Theme", new MenuItem[] {
+                    defaultTheme,
+                    darkTheme,
+                    lightTheme,
+                    darkOrangeTheme
+                }),
                 new MenuItem("Hide _Mailboxes", "", null),
                 new MenuItem("Hide _Preview", "", null)
-            })
-        });
+            ])
+        ]);
         Application.Top.Add(menu);
         Width = Dim.Fill();
         Height = Dim.Fill() - 1; // Leave one row for the status bar
@@ -193,5 +174,28 @@ public class MainWindow : Window
         // Select the first row by default to display an email
         messagesView.SelectedRow = 0;
         messagesView.SetNeedsDisplay();
+    }
+
+    private async void LoadEmailsForSelectedMailbox()
+    {
+        if (mailboxesListView!.SelectedItem < 0 || mailboxesListView.SelectedItem >= mailboxes!.Count)
+            return;
+
+        var selectedMailbox = mailboxes[mailboxesListView.SelectedItem];
+        var emails = await emailService.GetEmailsAsync(selectedMailbox.Id);
+
+        Application.MainLoop.Invoke(() =>
+        {
+            emailDataTable!.Rows.Clear();
+            foreach (var email in emails)
+            {
+                emailDataTable.Rows.Add("<date>", email.From, email.Subject, email.Snippet);
+            }
+            if (emailDataTable.Rows.Count > 0)
+            {
+                messagesView!.SelectedRow = 0;
+            }
+            messagesView!.SetNeedsDisplay();
+        });
     }
 }

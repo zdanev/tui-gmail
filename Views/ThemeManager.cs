@@ -5,6 +5,7 @@ using Terminal.Gui;
 public static class ThemeManager
 {
     public static ColorScheme DefaultScheme { get; set; } = null!;
+
     public static ColorScheme DarkScheme = new ColorScheme
     {
         Normal = new Terminal.Gui.Attribute(Color.White, Color.Black),
