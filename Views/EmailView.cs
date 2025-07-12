@@ -42,6 +42,7 @@ public class EmailView : View
             Width = Dim.Fill(),
             Height = Dim.Fill(),
             ReadOnly = true,
+            WordWrap = true
         };
         Add(bodyTextView);
     }

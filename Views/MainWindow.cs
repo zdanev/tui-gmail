@@ -61,7 +61,7 @@ public class MainWindow : Window
         }
 
         showUnreadCountMenuItem = new MenuItem(
-            settings.ShowUnreadCount ? "Hide unread count" : "Show unread count",
+            settings.ShowUnreadCount ? "Hide _unread count" : "Show _unread count",
             "",
             ToggleShowUnreadCount);
 
@@ -81,10 +81,11 @@ public class MainWindow : Window
             ]),
             new MenuBarItem("_View",
             [
-                new MenuBarItem("_Theme", themeMenuItems.ToArray()),
                 showUnreadCountMenuItem,
                 new MenuItem("Hide _Mailboxes", "", null),
-                new MenuItem("Hide _Preview", "", null)
+                new MenuItem("Hide _Preview", "", null),
+                new MenuItem("---", "", null),
+                new MenuBarItem("_Theme", themeMenuItems.ToArray()),
             ])
         ]);
         Application.Top.Add(menu);
@@ -93,9 +94,9 @@ public class MainWindow : Window
 
         var statusBar = new StatusBar(new StatusItem[]
         {
-            new StatusItem(Key.F1, "~F1~ Help", null),
-            new StatusItem(Key.F2, "~F2~ Save", null),
-            new StatusItem(Key.F3, "~F3~ Load", null)
+            new StatusItem(Key.F1, "~Ctrl-N~ New Message", null),
+            new StatusItem(Key.F2, "~Ctrl-R~ Reload", null),
+            new StatusItem(Key.F3, "~Ctrl-Q~ Quit", null)
         });
         Application.Top.Add(statusBar);
 
@@ -103,7 +104,7 @@ public class MainWindow : Window
         {
             X = 0,
             Y = 0,
-            Width = 25,
+            Width = Dim.Sized(25),
             Height = Dim.Fill(),
         };
         Add(mailboxesListView);
@@ -129,7 +130,7 @@ public class MainWindow : Window
             Height = Dim.Percent(50),
             FullRowSelect = true,
         };
-        messagesView.Style.ExpandLastColumn = true;
+        messagesView.Style.ExpandLastColumn = false;
         Add(messagesView);
 
         var horizontalLine = new LineView(Orientation.Horizontal)
@@ -159,6 +160,11 @@ public class MainWindow : Window
 
         messagesView.Table = emailDataTable;
 
+        var fromColumnStyle = messagesView.Style.GetOrCreateColumnStyle(messagesView.Table.Columns[1]);
+        fromColumnStyle.MaxWidth = 30;
+        var bodyColumnStyle = messagesView.Style.GetOrCreateColumnStyle(messagesView.Table.Columns[3]);
+        bodyColumnStyle.Visible = false;
+
         messagesView.SelectedCellChanged += (args) =>
         {
             var row = args.NewRow;
@@ -182,7 +188,7 @@ public class MainWindow : Window
         settingsService.SaveSettings(settings);
         if (showUnreadCountMenuItem != null)
         {
-            showUnreadCountMenuItem.Title = settings.ShowUnreadCount ? "Hide unread count" : "Show unread count";
+            showUnreadCountMenuItem.Title = settings.ShowUnreadCount ? "Hide _unread count" : "Show _unread count";
         }
         UpdateMailboxesList();
     }
