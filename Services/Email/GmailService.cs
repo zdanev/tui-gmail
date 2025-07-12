@@ -1,4 +1,3 @@
-
 namespace TuiGmail.Services.Email;
 
 using Google.Apis.Auth.OAuth2;

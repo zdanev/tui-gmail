@@ -3,30 +3,35 @@ namespace TuiGmail.Views;
 using System.Data;
 using Terminal.Gui;
 using Terminal.Gui.Graphs;
-
 using TuiGmail.Services.Email;
+using TuiGmail.Services.Infra;
 
 public class MainWindow : Window
 {
     private readonly IEmailService emailService;
+    private readonly SettingsService settingsService;
     private readonly UserProfile userProfile;
+    private readonly Settings settings;
 
     private IList<Mailbox>? mailboxes;
     private ListView? mailboxesListView;
     private DataTable? emailDataTable;
     private TableView? messagesView;
-    private readonly List<MenuItem> _themeMenuItems = new();
+    private readonly List<MenuItem> themeMenuItems = new();
+    private MenuItem? showUnreadCountMenuItem;
 
-    public MainWindow(IEmailService emailService) : base("TUI Gmail")
+    public MainWindow(IEmailService emailService, SettingsService settingsService) : base("TUI Gmail")
     {
         this.emailService = emailService;
+        this.settingsService = settingsService;
+        this.settings = settingsService.LoadSettings();
         this.userProfile = emailService.GetUserProfile();
 
         InitializeComponent();
         ThemeManager.ThemeChanged += OnThemeChanged;
 
         // Load emails for the first mailbox
-        if (mailboxes!.Any())
+        if (mailboxes != null && mailboxes.Any())
         {
             mailboxesListView!.SelectedItem = 0;
             LoadEmailsForSelectedMailbox();
@@ -35,7 +40,7 @@ public class MainWindow : Window
 
     private void OnThemeChanged(string themeName)
     {
-        foreach (var menuItem in _themeMenuItems)
+        foreach (var menuItem in themeMenuItems)
         {
             menuItem.Checked = menuItem.Title.ToString() == themeName;
         }
@@ -51,8 +56,13 @@ public class MainWindow : Window
         foreach (var themeName in ThemeManager.Themes.Keys)
         {
             var themeMenuItem = new MenuItem(themeName, "", () => ThemeManager.ApplyTheme(themeName));
-            _themeMenuItems.Add(themeMenuItem);
+            themeMenuItems.Add(themeMenuItem);
         }
+
+        showUnreadCountMenuItem = new MenuItem(
+            settings.ShowUnreadCount ? "Hide unread count" : "Show unread count",
+            "",
+            ToggleShowUnreadCount);
 
         var menu = new MenuBar(
         [
@@ -70,7 +80,8 @@ public class MainWindow : Window
             ]),
             new MenuBarItem("_View",
             [
-                new MenuBarItem("_Theme", _themeMenuItems.ToArray()),
+                new MenuBarItem("_Theme", themeMenuItems.ToArray()),
+                showUnreadCountMenuItem,
                 new MenuItem("Hide _Mailboxes", "", null),
                 new MenuItem("Hide _Preview", "", null)
             ])
@@ -97,7 +108,7 @@ public class MainWindow : Window
         Add(mailboxesListView);
 
         this.mailboxes = this.emailService.GetMailboxes();
-        mailboxesListView.SetSource(mailboxes.Select(m => m.Name).ToList());
+        UpdateMailboxesList();
 
         mailboxesListView.SelectedItemChanged += (args) => LoadEmailsForSelectedMailbox();
 
@@ -164,9 +175,29 @@ public class MainWindow : Window
         messagesView.SetNeedsDisplay();
     }
 
+    private void ToggleShowUnreadCount()
+    {
+        settings.ShowUnreadCount = !settings.ShowUnreadCount;
+        settingsService.SaveSettings(settings);
+        if (showUnreadCountMenuItem != null)
+        {
+            showUnreadCountMenuItem.Title = settings.ShowUnreadCount ? "Hide unread count" : "Show unread count";
+        }
+        UpdateMailboxesList();
+    }
+
+    private void UpdateMailboxesList()
+    {
+        if (mailboxesListView != null && mailboxes != null)
+        {
+            mailboxesListView.SetSource(mailboxes.Select(m =>
+                settings.ShowUnreadCount && m.UnreadMessages > 0 ? $"{m.Name} ({m.UnreadMessages})" : m.Name).ToList());
+        }
+    }
+
     private async void LoadEmailsForSelectedMailbox()
     {
-        if (mailboxesListView!.SelectedItem < 0 || mailboxesListView.SelectedItem >= mailboxes!.Count)
+        if (mailboxesListView == null || mailboxes == null || mailboxesListView.SelectedItem < 0 || mailboxesListView.SelectedItem >= mailboxes.Count)
             return;
 
         var selectedMailbox = mailboxes[mailboxesListView.SelectedItem];

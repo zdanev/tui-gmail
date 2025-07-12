@@ -2,6 +2,7 @@
 
 using Terminal.Gui;
 using TuiGmail.Services.Email;
+using TuiGmail.Services.Infra;
 using TuiGmail.Views;
 
 class Program
@@ -9,7 +10,8 @@ class Program
     static async Task Main(string[] args)
     {
         Console.WriteLine("TUI Gmail Client, Copyright (c) 2025, zdanev@");
-        IEmailService emailService = new GmailService();
+        var emailService = new GmailService();
+        var settingsService = new SettingsService();
 
         Console.WriteLine("Authenticating...");
         if (!await emailService.AuthenticateAsync())
@@ -29,11 +31,11 @@ class Program
         Application.Init();
         var top = Application.Top;
 
-        var mainWindow = new MainWindow(emailService);
+        var mainWindow = new MainWindow(emailService, settingsService);
         top.Add(mainWindow);
 
         ThemeManager.DefaultScheme = Colors.Base;
-        ThemeManager.LoadTheme();
+        ThemeManager.LoadTheme(settingsService);
 
         Application.Run();
         Application.Shutdown();

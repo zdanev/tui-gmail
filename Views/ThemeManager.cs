@@ -7,7 +7,7 @@ public static class ThemeManager
 {
     public static event Action<string>? ThemeChanged;
 
-    private static readonly SettingsService _settingsService = new SettingsService();
+    private static readonly SettingsService settingsService = new SettingsService();
 
     public static ColorScheme DefaultScheme { get; set; } = new ColorScheme();
 
@@ -19,9 +19,9 @@ public static class ThemeManager
         { "Dark Orange", new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black), Focus = new Terminal.Gui.Attribute(Color.DarkGray, Color.Gray), HotNormal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.DarkGray), HotFocus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Gray), Disabled = new Terminal.Gui.Attribute(Color.Gray, Color.DarkGray) } }
     };
 
-    public static void LoadTheme()
+    public static void LoadTheme(SettingsService settingsService)
     {
-        var settings = _settingsService.LoadSettings();
+        var settings = settingsService.LoadSettings();
         var themeName = settings.Theme ?? "Default";
         ApplyTheme(themeName);
     }
@@ -34,9 +34,9 @@ public static class ThemeManager
             UpdateViewScheme(Application.Top, scheme);
             ThemeChanged?.Invoke(themeName);
 
-            var settings = _settingsService.LoadSettings();
+            var settings = settingsService.LoadSettings();
             settings.Theme = themeName;
-            _settingsService.SaveSettings(settings);
+            settingsService.SaveSettings(settings);
         }
     }
 
