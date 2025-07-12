@@ -19,6 +19,7 @@ public class MainWindow : Window
     private TableView? messagesView;
     private readonly List<MenuItem> themeMenuItems = new();
     private MenuItem? showUnreadCountMenuItem;
+    private EmailView? emailView;
 
     public MainWindow(IEmailService emailService, SettingsService settingsService) : base("TUI Gmail")
     {
@@ -140,7 +141,7 @@ public class MainWindow : Window
         Add(horizontalLine);
         Add(verticalLine); // render vertical separator after the view
 
-        var emailView = new EmailView()
+        emailView = new EmailView()
         {
             X = Pos.Right(verticalLine),
             Y = Pos.Bottom(horizontalLine),
@@ -200,12 +201,21 @@ public class MainWindow : Window
         if (mailboxesListView == null || mailboxes == null || mailboxesListView.SelectedItem < 0 || mailboxesListView.SelectedItem >= mailboxes.Count)
             return;
 
+        // Clear messages and show loading indicator
+        Application.MainLoop.Invoke(() =>
+        {
+            emailDataTable!.Rows.Clear();
+            emailDataTable.Rows.Add("Loading", "messages", "...", "");
+            messagesView!.SetNeedsDisplay();
+            emailView!.SetEmail("", "", ""); // Clear the current message
+        });
+
         var selectedMailbox = mailboxes[mailboxesListView.SelectedItem];
         var emails = await emailService.GetEmailsAsync(selectedMailbox.Id);
 
         Application.MainLoop.Invoke(() =>
         {
-            emailDataTable!.Rows.Clear();
+            emailDataTable!.Rows.Clear(); // Clear loading indicator
             foreach (var email in emails)
             {
                 var displayTime = email.ReceivedDateTime.Date == DateTime.Today ?
