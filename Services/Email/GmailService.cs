@@ -1,5 +1,5 @@
 
-namespace TuiGmail.EmailService;
+namespace TuiGmail.Services.Email;
 
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Gmail.v1;

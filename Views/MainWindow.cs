@@ -4,7 +4,7 @@ using System.Data;
 using Terminal.Gui;
 using Terminal.Gui.Graphs;
 
-using TuiGmail.EmailService;
+using TuiGmail.Services.Email;
 
 public class MainWindow : Window
 {
@@ -15,6 +15,7 @@ public class MainWindow : Window
     private ListView? mailboxesListView;
     private DataTable? emailDataTable;
     private TableView? messagesView;
+    private readonly List<MenuItem> _themeMenuItems = new();
 
     public MainWindow(IEmailService emailService) : base("TUI Gmail")
     {
@@ -22,6 +23,7 @@ public class MainWindow : Window
         this.userProfile = emailService.GetUserProfile();
 
         InitializeComponent();
+        ThemeManager.ThemeChanged += OnThemeChanged;
 
         // Load emails for the first mailbox
         if (mailboxes!.Any())
@@ -31,35 +33,26 @@ public class MainWindow : Window
         }
     }
 
+    private void OnThemeChanged(string themeName)
+    {
+        foreach (var menuItem in _themeMenuItems)
+        {
+            menuItem.Checked = menuItem.Title.ToString() == themeName;
+        }
+    }
+
     private void InitializeComponent()
     {
         Title = userProfile.EmailAddress;
         X = 0;
         Y = 1; // Leave one row for the top-level menu
 
-        var defaultTheme = new MenuItem("Default", "", null) { Checked = true };
-        defaultTheme.Action = () =>
+        var themeItems = new List<MenuItem>();
+        foreach (var themeName in ThemeManager.Themes.Keys)
         {
-            ThemeManager.ApplyTheme(ThemeManager.DefaultScheme, defaultTheme);
-        };
-
-        var darkTheme = new MenuItem("Dark", "", null);
-        darkTheme.Action = () =>
-        {
-            ThemeManager.ApplyTheme(ThemeManager.DarkScheme, darkTheme);
-        };
-
-        var lightTheme = new MenuItem("Light", "", null);
-        lightTheme.Action = () =>
-        {
-            ThemeManager.ApplyTheme(ThemeManager.LightScheme, lightTheme);
-        };
-
-        var darkOrangeTheme = new MenuItem("Dark Orange", "", null);
-        darkOrangeTheme.Action = () =>
-        {
-            ThemeManager.ApplyTheme(ThemeManager.DarkOrangeScheme, darkOrangeTheme);
-        };
+            var themeMenuItem = new MenuItem(themeName, "", () => ThemeManager.ApplyTheme(themeName));
+            _themeMenuItems.Add(themeMenuItem);
+        }
 
         var menu = new MenuBar(
         [
@@ -77,12 +70,7 @@ public class MainWindow : Window
             ]),
             new MenuBarItem("_View",
             [
-                new MenuBarItem("_Theme", new MenuItem[] {
-                    defaultTheme,
-                    darkTheme,
-                    lightTheme,
-                    darkOrangeTheme
-                }),
+                new MenuBarItem("_Theme", _themeMenuItems.ToArray()),
                 new MenuItem("Hide _Mailboxes", "", null),
                 new MenuItem("Hide _Preview", "", null)
             ])

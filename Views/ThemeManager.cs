@@ -1,45 +1,43 @@
 namespace TuiGmail.Views;
 
 using Terminal.Gui;
+using TuiGmail.Services.Infra;
 
 public static class ThemeManager
 {
-    public static ColorScheme DefaultScheme { get; set; } = null!;
+    public static event Action<string>? ThemeChanged;
 
-    public static ColorScheme DarkScheme = new ColorScheme
+    private static readonly SettingsService _settingsService = new SettingsService();
+
+    public static ColorScheme DefaultScheme { get; set; } = new ColorScheme();
+
+    public static readonly Dictionary<string, ColorScheme> Themes = new()
     {
-        Normal = new Terminal.Gui.Attribute(Color.White, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.Black, Color.Gray),
-        HotNormal = new Terminal.Gui.Attribute(Color.Cyan, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.Cyan, Color.Gray),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
+        { "Default", DefaultScheme },
+        { "Dark", new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.White, Color.Black), Focus = new Terminal.Gui.Attribute(Color.Black, Color.Gray), HotNormal = new Terminal.Gui.Attribute(Color.Cyan, Color.Black), HotFocus = new Terminal.Gui.Attribute(Color.Cyan, Color.Gray), Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black) } },
+        { "Light", new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.Black, Color.White), Focus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray), HotNormal = new Terminal.Gui.Attribute(Color.Blue, Color.White), HotFocus = new Terminal.Gui.Attribute(Color.Blue, Color.DarkGray), Disabled = new Terminal.Gui.Attribute(Color.Gray, Color.White) } },
+        { "Dark Orange", new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black), Focus = new Terminal.Gui.Attribute(Color.DarkGray, Color.Gray), HotNormal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.DarkGray), HotFocus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Gray), Disabled = new Terminal.Gui.Attribute(Color.Gray, Color.DarkGray) } }
     };
 
-    public static ColorScheme LightScheme = new ColorScheme
+    public static void LoadTheme()
     {
-        Normal = new Terminal.Gui.Attribute(Color.Black, Color.White),
-        Focus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
-        HotNormal = new Terminal.Gui.Attribute(Color.Blue, Color.White),
-        HotFocus = new Terminal.Gui.Attribute(Color.Blue, Color.DarkGray),
-        Disabled = new Terminal.Gui.Attribute(Color.Gray, Color.White)
-    };
+        var settings = _settingsService.LoadSettings();
+        var themeName = settings.Theme ?? "Default";
+        ApplyTheme(themeName);
+    }
 
-    public static ColorScheme DarkOrangeScheme = new ColorScheme
+    public static void ApplyTheme(string themeName)
     {
-        Normal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.DarkGray, Color.Gray),
-        HotNormal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.DarkGray),
-        HotFocus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Gray),
-        Disabled = new Terminal.Gui.Attribute(Color.Gray, Color.DarkGray)
-    };
+        if (Themes.TryGetValue(themeName, out var scheme))
+        {
+            Colors.Base = scheme;
+            UpdateViewScheme(Application.Top, scheme);
+            ThemeChanged?.Invoke(themeName);
 
-    private static MenuItem? _selectedTheme = null;
-
-    public static void ApplyTheme(ColorScheme scheme, MenuItem selectedMenuItem)
-    {
-        Colors.Base = scheme;
-        UpdateViewScheme(Application.Top, scheme);
-        UpdateCheck(selectedMenuItem);
+            var settings = _settingsService.LoadSettings();
+            settings.Theme = themeName;
+            _settingsService.SaveSettings(settings);
+        }
     }
 
     private static void UpdateViewScheme(View view, ColorScheme scheme)
@@ -53,15 +51,5 @@ public static class ThemeManager
                 UpdateViewScheme(subView, scheme);
             }
         }
-    }
-
-    private static void UpdateCheck(MenuItem newSelected)
-    {
-        if (_selectedTheme != null)
-        {
-            _selectedTheme.Checked = false;
-        }
-        _selectedTheme = newSelected;
-        _selectedTheme.Checked = true;
     }
 }

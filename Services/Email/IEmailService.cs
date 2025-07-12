@@ -1,4 +1,4 @@
-namespace TuiGmail.EmailService;
+namespace TuiGmail.Services.Email;
 
 public interface IEmailService
 {

@@ -1,7 +1,7 @@
 ﻿namespace TuiGmail;
 
 using Terminal.Gui;
-using TuiGmail.EmailService;
+using TuiGmail.Services.Email;
 using TuiGmail.Views;
 
 class Program
@@ -27,11 +27,13 @@ class Program
         Console.WriteLine("Launching TUI...");
 
         Application.Init();
-        ThemeManager.DefaultScheme = Colors.Base;
         var top = Application.Top;
 
         var mainWindow = new MainWindow(emailService);
         top.Add(mainWindow);
+
+        ThemeManager.DefaultScheme = Colors.Base;
+        ThemeManager.LoadTheme();
 
         Application.Run();
         Application.Shutdown();
