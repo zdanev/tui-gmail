@@ -11,13 +11,13 @@ public class MainWindow : Window
     private readonly IEmailService emailService;
     private readonly UserProfile userProfile;
 
-    private DataTable? emailDataTable;
     private MenuItem defaultTheme = new MenuItem("Default", "", null) { Checked = true };
     private MenuItem darkTheme = new MenuItem("Dark", "", null);
     private MenuItem lightTheme = new MenuItem("Light", "", null);
     private MenuItem darkOrangeTheme = new MenuItem("Dark Orange", "", null);
-    private Label? userEmailLabel;
+
     private ListView? mailboxesListView;
+    private DataTable? emailDataTable;
     private TableView? messagesView;
 
     public MainWindow(IEmailService emailService) : base("TUI Gmail")
@@ -56,12 +56,10 @@ public class MainWindow : Window
 
         var menu = new MenuBar(new MenuBarItem[]
         {
-            new MenuBarItem("_File", new MenuItem[]
+            new MenuBarItem("_Mail", new MenuItem[]
             {
                 new MenuItem("_New", "", null),
-                new MenuItem("_Open", "", null),
-                new MenuItem("_Close", "", null),
-                new MenuItem("_Save", "", null),
+                new MenuItem("_Refresh", "", null),
                 new MenuItem("_Quit", "", () => { Application.RequestStop(); })
             }),
             new MenuBarItem("_Edit", new MenuItem[]
@@ -73,8 +71,8 @@ public class MainWindow : Window
             new MenuBarItem("_View", new MenuItem[]
             {
                 new MenuBarItem("_Theme", new MenuItem[] { defaultTheme, darkTheme, lightTheme, darkOrangeTheme }),
-                new MenuItem("_Zoom In", "", null),
-                new MenuItem("Zoom _Out", "", null)
+                new MenuItem("Hide _Mailboxes", "", null),
+                new MenuItem("Hide _Preview", "", null)
             })
         });
         Application.Top.Add(menu);
@@ -89,20 +87,10 @@ public class MainWindow : Window
         });
         Application.Top.Add(statusBar);
 
-        userEmailLabel = new Label("Loading user...")
-        {
-            X = 0,
-            Y = 0,
-            Width = Dim.Fill(),
-            Height = 1,
-            TextAlignment = TextAlignment.Centered,
-        };
-        Add(userEmailLabel);
-
         mailboxesListView = new ListView()
         {
             X = 0,
-            Y = Pos.Bottom(userEmailLabel),
+            Y = 0,
             Width = 25,
             Height = Dim.Fill(),
         };
