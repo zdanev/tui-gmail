@@ -16,6 +16,7 @@ public class MainWindow : Window
     private MenuItem lightTheme = new MenuItem("Light", "", null);
     private MenuItem darkOrangeTheme = new MenuItem("Dark Orange", "", null);
 
+    private IList<Mailbox>? mailboxes;
     private ListView? mailboxesListView;
     private DataTable? emailDataTable;
     private TableView? messagesView;
@@ -27,6 +28,36 @@ public class MainWindow : Window
         this.Title = userProfile.EmailAddress;
 
         InitializeComponent();
+
+        // Load emails for the first mailbox
+        if (mailboxes!.Any())
+        {
+            mailboxesListView!.SelectedItem = 0;
+            LoadEmailsForSelectedMailbox();
+        }
+    }
+
+    private async void LoadEmailsForSelectedMailbox()
+    {
+        if (mailboxesListView!.SelectedItem < 0 || mailboxesListView.SelectedItem >= mailboxes!.Count)
+            return;
+
+        var selectedMailbox = mailboxes[mailboxesListView.SelectedItem];
+        var emails = await emailService.GetEmailsAsync(selectedMailbox.Id);
+
+        Application.MainLoop.Invoke(() =>
+        {
+            emailDataTable!.Rows.Clear();
+            foreach (var email in emails)
+            {
+                emailDataTable.Rows.Add("<date>", email.From, email.Subject, email.Snippet);
+            }
+            if (emailDataTable.Rows.Count > 0)
+            {
+                messagesView!.SelectedRow = 0;
+            }
+            messagesView!.SetNeedsDisplay();
+        });
     }
 
     private void InitializeComponent()
@@ -96,8 +127,10 @@ public class MainWindow : Window
         };
         Add(mailboxesListView);
 
-        var mailboxes = this.emailService.GetMailboxes();
+        this.mailboxes = this.emailService.GetMailboxes();
         mailboxesListView.SetSource(mailboxes.Select(m => m.Name).ToList());
+
+        mailboxesListView.SelectedItemChanged += (args) => LoadEmailsForSelectedMailbox();
 
         var verticalLine = new LineView(Orientation.Vertical)
         {
@@ -142,11 +175,6 @@ public class MainWindow : Window
         emailDataTable.Columns.Add("From");
         emailDataTable.Columns.Add("Subject");
         emailDataTable.Columns.Add("Body");
-
-        // Add some dummy data
-        emailDataTable.Rows.Add("10:00 AM", "sender1@example.com", "Hello World", "This is the body of the first email.");
-        emailDataTable.Rows.Add("10:00 AM", "sender2@example.com", "Re: Your order", "This is the body of the second email.");
-        emailDataTable.Rows.Add("Yesterday", "sender3@example.com", "Important update", "This is the body of the third email.");
 
         messagesView.Table = emailDataTable;
 
