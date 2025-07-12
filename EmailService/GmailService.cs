@@ -153,6 +153,17 @@ public class GmailService : IEmailService
                 TotalMessages = labelDetails.MessagesTotal ?? 0
             });
         }
+
+        var preferredOrder = new List<string> { "INBOX", "UNREAD", "IMPORTANT", "STARRED", "DRAFT", "SENT", "SPAM", "TRASH" };
+        mailboxes.Sort((a, b) => {
+            var aIndex = preferredOrder.IndexOf(a.Name.ToUpper());
+            var bIndex = preferredOrder.IndexOf(b.Name.ToUpper());
+            if (aIndex == -1) aIndex = int.MaxValue;
+            if (bIndex == -1) bIndex = int.MaxValue;
+            if (aIndex == bIndex) return string.Compare(a.Name, b.Name);
+            return aIndex.CompareTo(bIndex);
+        });
+
         cachedMailboxes = mailboxes;
         return mailboxes;
     }
