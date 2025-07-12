@@ -208,7 +208,10 @@ public class MainWindow : Window
             emailDataTable!.Rows.Clear();
             foreach (var email in emails)
             {
-                emailDataTable.Rows.Add("<date>", email.From, email.Subject, email.Snippet);
+                var displayTime = email.ReceivedDateTime.Date == DateTime.Today ?
+                    email.ReceivedDateTime.ToShortTimeString() :
+                    email.ReceivedDateTime.ToShortDateString();
+                emailDataTable.Rows.Add(displayTime, email.From, email.Subject, email.Snippet);
             }
             if (emailDataTable.Rows.Count > 0)
             {
