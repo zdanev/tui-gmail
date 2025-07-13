@@ -207,7 +207,8 @@ public class GmailService : IEmailService
                     From = fromHeader?.Value ?? string.Empty,
                     Subject = subjectHeader?.Value ?? string.Empty,
                     Snippet = messageDetails.Snippet ?? string.Empty,
-                    ReceivedDateTime = DateTimeOffset.FromUnixTimeMilliseconds(messageDetails.InternalDate ?? 0).LocalDateTime
+                    ReceivedDateTime = DateTimeOffset.FromUnixTimeMilliseconds(messageDetails.InternalDate ?? 0).LocalDateTime,
+                    IsUnread = messageDetails.LabelIds.Contains("UNREAD")
                 });
             }
         }

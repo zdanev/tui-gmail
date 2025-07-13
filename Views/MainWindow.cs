@@ -141,8 +141,11 @@ public class MainWindow : Window
         emailsDataTable.Columns.Add("From");
         emailsDataTable.Columns.Add("Subject");
         emailsDataTable.Columns.Add("Body");
+        emailsDataTable.Columns.Add("Unread", typeof(bool));
 
         messagesView.Table = emailsDataTable;
+
+        messagesView.Style.GetOrCreateColumnStyle(messagesView.Table.Columns["Unread"]).Visible = false;
 
         var fromColumnStyle = messagesView.Style.GetOrCreateColumnStyle(messagesView.Table.Columns[1]);
         fromColumnStyle.MaxWidth = 30;
@@ -236,7 +239,8 @@ public class MainWindow : Window
                 var displayTime = email.ReceivedDateTime.Date == DateTime.Today ?
                     email.ReceivedDateTime.ToShortTimeString() :
                     email.ReceivedDateTime.ToShortDateString();
-                emailsDataTable.Rows.Add(displayTime, email.From, email.Subject, email.Snippet);
+                var fromText = email.IsUnread ? "* " + email.From : email.From;
+                emailsDataTable.Rows.Add(displayTime, fromText, email.Subject, email.Snippet, email.IsUnread);
             }
             if (emailsDataTable.Rows.Count > 0)
             {
