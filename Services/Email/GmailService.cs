@@ -136,7 +136,7 @@ public class GmailService : IEmailService
         var labels = labelsResponse.Labels;
         if (labels == null)
         {
-            return new List<Mailbox>();
+            return [];
         }
 
         var mailboxes = new List<Mailbox>();
@@ -172,7 +172,7 @@ public class GmailService : IEmailService
         return cachedMailboxes!;
     }
 
-    public async Task<IList<Email>> GetEmailsAsync(string mailboxId)
+    public async Task<EmailListResult> GetEmailsAsync(string mailboxId, string? pageToken = null)
     {
         if (credentials == null)
         {
@@ -187,7 +187,8 @@ public class GmailService : IEmailService
 
         var request = service.Users.Messages.List("me");
         request.LabelIds = mailboxId;
-        request.MaxResults = 10;
+        request.MaxResults = 20;
+        request.PageToken = pageToken;
 
         var response = await request.ExecuteAsync();
         var emails = new List<Email>();
@@ -211,6 +212,10 @@ public class GmailService : IEmailService
             }
         }
 
-        return emails;
+        return new EmailListResult
+        {
+            Emails = emails,
+            NextPageToken = response.NextPageToken
+        };
     }
 }

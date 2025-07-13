@@ -7,5 +7,5 @@ public interface IEmailService
     UserProfile GetUserProfile();
     Task<IList<Mailbox>> GetMailboxesAsync();
     IList<Mailbox> GetMailboxes();
-    Task<IList<Email>> GetEmailsAsync(string mailboxId);
+    Task<EmailListResult> GetEmailsAsync(string mailboxId, string? pageToken = null);
 }
