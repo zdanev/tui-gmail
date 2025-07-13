@@ -68,7 +68,7 @@ public class MainWindow : Window
                 showUnreadCountMenuItem,
                 new MenuItem("Hide _Mailboxes", "", null),
                 new MenuItem("Hide _Preview", "", null),
-                new MenuItem("---", "", null),
+                null,
                 new MenuBarItem("_Theme", themeMenuItems.ToArray()),
             ])
         ]);
