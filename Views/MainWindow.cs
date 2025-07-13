@@ -247,6 +247,8 @@ public class MainWindow : Window
                 if (clearExisting)
                 {
                     messagesView.SelectedRow = 0;
+                    var firstRow = emailsDataTable.Rows[0];
+                    emailView.SetEmail(firstRow["From"].ToString()!, firstRow["Subject"].ToString()!, firstRow["Body"].ToString()!);
                 }
                 else
                 {
