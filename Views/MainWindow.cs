@@ -3,6 +3,7 @@ namespace TuiGmail.Views;
 using System.Data;
 using Terminal.Gui;
 using Terminal.Gui.Graphs;
+using System.Linq;
 using TuiGmail.Services.Email;
 using TuiGmail.Services.Infra;
 
@@ -12,14 +13,16 @@ public class MainWindow : Window
     private readonly SettingsService settingsService;
     private readonly UserProfile userProfile;
     private readonly Settings settings;
+    private readonly IList<Mailbox> mailboxes = [];
 
-    private IList<Mailbox>? mailboxes;
-    private ListView? mailboxesListView;
-    private DataTable? emailDataTable;
-    private TableView? messagesView;
-    private readonly List<MenuItem> themeMenuItems = new();
-    private MenuItem? showUnreadCountMenuItem;
-    private EmailView? emailView;
+    private readonly ListView mailboxesListView;
+    private readonly DataTable emailsDataTable;
+    private readonly TableView messagesView;
+    private readonly EmailView emailView;
+    private readonly List<MenuItem> themeMenuItems = [];
+    private readonly MenuItem showUnreadCountMenuItem;
+    private readonly StatusBar statusBar;
+
     private string? nextPageToken;
 
     public MainWindow(IEmailService emailService, SettingsService settingsService) : base("TUI Gmail")
@@ -27,29 +30,9 @@ public class MainWindow : Window
         this.emailService = emailService;
         this.settingsService = settingsService;
         this.settings = settingsService.LoadSettings();
+        this.mailboxes = emailService.GetMailboxes() ?? [];
         this.userProfile = emailService.GetUserProfile();
 
-        InitializeComponent();
-        ThemeManager.ThemeChanged += OnThemeChanged;
-
-        // Load emails for the first mailbox
-        if (mailboxes != null && mailboxes.Any())
-        {
-            mailboxesListView!.SelectedItem = 0;
-            LoadEmailsForSelectedMailbox(clearExisting: true);
-        }
-    }
-
-    private void OnThemeChanged(string themeName)
-    {
-        foreach (var menuItem in themeMenuItems)
-        {
-            menuItem.Checked = menuItem.Title.ToString() == themeName;
-        }
-    }
-
-    private void InitializeComponent()
-    {
         Title = userProfile.EmailAddress;
         X = 0;
         Y = 1; // Leave one row for the top-level menu
@@ -93,11 +76,11 @@ public class MainWindow : Window
         Width = Dim.Fill();
         Height = Dim.Fill() - 1; // Leave one row for the status bar
 
-        var statusBar = new StatusBar(
+        statusBar = new StatusBar(
         [
-            new StatusItem(Key.F1, "~Ctrl-N~ New Message", null),
-            new StatusItem(Key.F2, "~Ctrl-R~ Reload", null),
-            new StatusItem(Key.F3, "~Ctrl-Q~ Quit", null)
+            new StatusItem(Key.Null, "~Ctrl-N~ New Message", null),
+            new StatusItem(Key.Null, "~Ctrl-R~ Reload", null),
+            new StatusItem(Key.Null, "~Ctrl-Q~ Quit", null)
         ]);
         Application.Top.Add(statusBar);
 
@@ -110,7 +93,6 @@ public class MainWindow : Window
         };
         Add(mailboxesListView);
 
-        this.mailboxes = this.emailService.GetMailboxes();
         UpdateMailboxesList();
 
         mailboxesListView.SelectedItemChanged += (args) => LoadEmailsForSelectedMailbox(clearExisting: true);
@@ -132,6 +114,7 @@ public class MainWindow : Window
             FullRowSelect = true,
         };
         messagesView.Style.ExpandLastColumn = false;
+        messagesView.Style.AlwaysShowHeaders = true;
         Add(messagesView);
 
         var horizontalLine = new LineView(Orientation.Horizontal)
@@ -153,13 +136,13 @@ public class MainWindow : Window
         Add(emailView);
 
         // Create a DataTable for the email list
-        emailDataTable = new DataTable();
-        emailDataTable.Columns.Add("Time");
-        emailDataTable.Columns.Add("From");
-        emailDataTable.Columns.Add("Subject");
-        emailDataTable.Columns.Add("Body");
+        emailsDataTable = new DataTable();
+        emailsDataTable.Columns.Add("Time");
+        emailsDataTable.Columns.Add("From");
+        emailsDataTable.Columns.Add("Subject");
+        emailsDataTable.Columns.Add("Body");
 
-        messagesView.Table = emailDataTable;
+        messagesView.Table = emailsDataTable;
 
         var fromColumnStyle = messagesView.Style.GetOrCreateColumnStyle(messagesView.Table.Columns[1]);
         fromColumnStyle.MaxWidth = 30;
@@ -169,16 +152,16 @@ public class MainWindow : Window
         messagesView.SelectedCellChanged += (args) =>
         {
             var row = args.NewRow;
-            if (row >= 0 && row < emailDataTable.Rows.Count)
+            if (row >= 0 && row < emailsDataTable.Rows.Count)
             {
-                var from = emailDataTable.Rows[row]["From"].ToString()!;
-                var subject = emailDataTable.Rows[row]["Subject"].ToString()!;
-                var body = emailDataTable.Rows[row]["Body"].ToString()!;
+                var from = emailsDataTable.Rows[row]["From"].ToString()!;
+                var subject = emailsDataTable.Rows[row]["Subject"].ToString()!;
+                var body = emailsDataTable.Rows[row]["Body"].ToString()!;
                 emailView.SetEmail(from, subject, body);
             }
 
             // Load next page when scrolling to the last email
-            if (row == emailDataTable.Rows.Count - 1 && nextPageToken != null)
+            if (row == emailsDataTable.Rows.Count - 1 && nextPageToken != null)
             {
                 LoadEmailsForSelectedMailbox(clearExisting: false);
             }
@@ -187,6 +170,15 @@ public class MainWindow : Window
         // Select the first row by default to display an email
         messagesView.SelectedRow = 0;
         messagesView.SetNeedsDisplay();
+
+        ThemeManager.ThemeChanged += OnThemeChanged;
+
+        // Load emails for the first mailbox
+        if (mailboxes != null && mailboxes.Any())
+        {
+            mailboxesListView!.SelectedItem = 0;
+            LoadEmailsForSelectedMailbox(clearExisting: true);
+        }
     }
 
     private void ToggleShowUnreadCount()
@@ -202,16 +194,13 @@ public class MainWindow : Window
 
     private void UpdateMailboxesList()
     {
-        if (mailboxesListView != null && mailboxes != null)
-        {
-            mailboxesListView.SetSource(mailboxes.Select(m =>
-                settings.ShowUnreadCount && m.UnreadMessages > 0 ? $"{m.Name} ({m.UnreadMessages})" : m.Name).ToList());
-        }
+        mailboxesListView.SetSource(mailboxes.Select(m =>
+            settings.ShowUnreadCount && m.UnreadMessages > 0 ? $"{m.Name} ({m.UnreadMessages})" : m.Name).ToList());
     }
 
     private async void LoadEmailsForSelectedMailbox(bool clearExisting)
     {
-        if (mailboxesListView == null || mailboxes == null || mailboxesListView.SelectedItem < 0 || mailboxesListView.SelectedItem >= mailboxes.Count)
+        if (mailboxesListView.SelectedItem < 0 || mailboxesListView.SelectedItem >= mailboxes.Count)
             return;
 
         if (clearExisting)
@@ -219,12 +208,20 @@ public class MainWindow : Window
             nextPageToken = null;
             Application.MainLoop.Invoke(() =>
             {
-                emailDataTable!.Rows.Clear();
-                emailDataTable?.Rows.Add("Loading", "messages", "...", "");
-                messagesView!.SetNeedsDisplay();
-                emailView!.SetEmail("", "", ""); // Clear the current message
+                emailsDataTable.Rows.Clear();
+                messagesView.SetNeedsDisplay();
+                emailView.SetEmail("", "", ""); // Clear the current message
             });
         }
+
+        Application.MainLoop.Invoke(() =>
+        {
+            if (!statusBar.Items.Any(item => item.Title.ToString() == "Loading messages..."))
+            {
+                statusBar.Items = statusBar.Items.Append(new StatusItem(Key.Null, "Loading messages...", null)).ToArray();
+                // statusBar.SetNeedsDisplay();
+            }
+        });
 
         var selectedMailbox = mailboxes[mailboxesListView.SelectedItem];
         var emailListResult = await emailService.GetEmailsAsync(selectedMailbox.Id, nextPageToken);
@@ -232,23 +229,37 @@ public class MainWindow : Window
 
         Application.MainLoop.Invoke(() =>
         {
-            if (emailDataTable == null) return;
-            if (clearExisting)
-            {
-                emailDataTable.Rows.Clear(); // Clear loading indicator
-            }
+            statusBar.Items = statusBar.Items.Where(item => item.Title.ToString() != "Loading messages...").ToArray();
+
             foreach (var email in emailListResult.Emails)
             {
                 var displayTime = email.ReceivedDateTime.Date == DateTime.Today ?
                     email.ReceivedDateTime.ToShortTimeString() :
                     email.ReceivedDateTime.ToShortDateString();
-                emailDataTable.Rows.Add(displayTime, email.From, email.Subject, email.Snippet);
+                emailsDataTable.Rows.Add(displayTime, email.From, email.Subject, email.Snippet);
             }
-            if (emailDataTable != null && emailDataTable.Rows.Count > 0 && clearExisting)
+            if (emailsDataTable.Rows.Count > 0)
             {
-                messagesView!.SelectedRow = 0;
+                if (clearExisting)
+                {
+                    messagesView.SelectedRow = 0;
+                }
+                else
+                {
+                    // After loading a new page, move the selection to the first new message
+                    messagesView.SelectedRow = emailsDataTable.Rows.Count - emailListResult.Emails.Count;
+                    messagesView.EnsureSelectedCellIsVisible();
+                }
             }
-            messagesView!.SetNeedsDisplay();
+            messagesView.SetNeedsDisplay();
         });
+    }
+
+    private void OnThemeChanged(string themeName)
+    {
+        foreach (var menuItem in themeMenuItems)
+        {
+            menuItem.Checked = menuItem.Title.ToString() == themeName;
+        }
     }
 }
