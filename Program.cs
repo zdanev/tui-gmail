@@ -34,7 +34,6 @@ class Program
         var mainWindow = new MainWindow(emailService, settingsService);
         top.Add(mainWindow);
 
-        ThemeManager.DefaultScheme = Colors.Base;
         ThemeManager.LoadTheme(settingsService);
 
         Application.Run();
