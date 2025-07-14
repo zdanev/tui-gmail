@@ -236,11 +236,11 @@ public class MainWindow : Window
 
             foreach (var email in emailListResult.Emails)
             {
-                var displayTime = email.ReceivedDateTime.Date == DateTime.Today ?
-                    email.ReceivedDateTime.ToShortTimeString() :
-                    email.ReceivedDateTime.ToShortDateString();
-                var fromText = email.IsUnread ? "* " + email.From : email.From;
-                emailsDataTable.Rows.Add(displayTime, fromText, email.Subject, email.Snippet, email.IsUnread);
+                var displayTime = (email.IsUnread ? "✉️ " : "  ") +
+                    (email.ReceivedDateTime.Date == DateTime.Today ?
+                        email.ReceivedDateTime.ToShortTimeString() :
+                        email.ReceivedDateTime.ToShortDateString());
+                emailsDataTable.Rows.Add(displayTime, email.From, email.Subject, email.Snippet, email.IsUnread);
             }
             if (emailsDataTable.Rows.Count > 0)
             {
